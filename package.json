@@ -8,7 +8,7 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "build": "npm install --workspaces && cd packages/client && npx vite build --mode production",
+    "build": "npm install --include-workspace-root && npm run build --workspace=client",
     "build:client": "npm run build --workspace=client",
     "start": "npm run start --workspace=server",
     "dev": "npm start --workspace=client & npm start --workspace=server",
