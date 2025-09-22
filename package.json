@@ -8,7 +8,7 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "build": "npm run build:client",
+    "build": "cd packages/client && npm install && npm run build",
     "build:client": "npm run build --workspace=client",
     "start": "npm run start --workspace=server",
     "dev": "npm start --workspace=client & npm start --workspace=server",
