@@ -1,8 +1,27 @@
 {
-  "buildCommand": "cd packages/client && npm run build",
+  "version": 2,
+  "name": "webtransport-chat-client",
+  "builds": [
+    {
+      "src": "packages/client/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "buildCommand": "cd packages/client && npm install && npm run build",
   "outputDirectory": "packages/client/dist",
   "installCommand": "npm install",
-  "devCommand": "cd packages/client && npm run dev",
   "env": {
     "VITE_RENDER_SERVER_URL": "https://webtransport-1.onrender.com"
   }
