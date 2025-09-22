@@ -1,0 +1,9 @@
+{
+  "buildCommand": "cd packages/client && npm run build",
+  "outputDirectory": "packages/client/dist",
+  "installCommand": "npm install",
+  "devCommand": "cd packages/client && npm run dev",
+  "env": {
+    "VITE_RENDER_SERVER_URL": "https://webtransport-1.onrender.com"
+  }
+}

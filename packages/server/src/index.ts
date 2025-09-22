@@ -153,6 +153,17 @@ async function main() {
   // Production: HTTP server serve static files (Render handles HTTPS termination)
   if (isProduction) {
     const httpServer = http.createServer(async (req, res) => {
+      // Enable CORS for Vercel client
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      
+      if (req.method === 'OPTIONS') {
+        res.writeHead(200);
+        res.end();
+        return;
+      }
+
       if (req.url === '/health') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ 
@@ -173,17 +184,13 @@ async function main() {
         return;
       }
 
-      const filepath = path.join(__dirname, "..", "..", "client", "dist", filename);
-      if (fs.existsSync(filepath)) {
-        res.writeHead(200, {
-          "content-type": (mime.getType(filename) || "text/plain")
-        });
-        res.end((await readFile(filepath)));
-      } else {
-        console.log(`❌ File not found: ${filepath}`);
-        res.writeHead(404);
-        res.end('File not found');
-      }
+      const filepath = path.join(process.cwd(), "packages", "client", "dist", filename);
+      // For server-only mode, don't serve static files - let Vercel handle client
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        message: 'WebTransport Server API - Static files served by Vercel', 
+        endpoints: ['/health', '/fingerprint'] 
+      }));
     });
     
     httpServer.listen(Number(PORT), HOST, () => {

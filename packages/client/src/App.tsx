@@ -5,11 +5,11 @@ import ChatDemo from './ChatDemo';
 // ←
 // →
 
-// Detect environment and use appropriate endpoint
-const isLocalhost = window.location.hostname === 'localhost';
-const ENDPOINT = isLocalhost 
-  ? `https://${window.location.hostname}:4433`
-  : `https://${window.location.host}`; // Use current host for production
+// Environment-based endpoint configuration
+const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const ENDPOINT = isDevelopment 
+  ? import.meta.env.VITE_SERVER_URL || `https://${window.location.hostname}:4433`
+  : import.meta.env.VITE_RENDER_SERVER_URL || `https://webtransport-1.onrender.com`;
 
 interface Log {
   message: string;
