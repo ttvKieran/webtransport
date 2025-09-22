@@ -123,7 +123,7 @@ async function main() {
        * Serve static files from "client/dist"
        */
 
-      const filepath = path.join(__dirname, "..", "client", "dist", filename);
+      const filepath = path.join(__dirname, "..", "..", "client", "dist", filename);
       if (fs.existsSync(filepath)) {
         res.writeHead(200, {
           "content-type": (mime.getType(filename) || "text/plain"),
@@ -132,40 +132,65 @@ async function main() {
         res.end((await readFile(filepath)));
 
       } else {
-        res.writeHead(404);
-        res.end('Not found');
+        // Fallback: try relative to server directory
+        const fallbackPath = path.join(__dirname, "..", "client", "dist", filename);
+        if (fs.existsSync(fallbackPath)) {
+          res.writeHead(200, {
+            "content-type": (mime.getType(filename) || "text/plain"),
+            "Alt-Svc": `h3=":${PORT}"`
+          });
+          res.end((await readFile(fallbackPath)));
+        } else {
+          console.log(`❌ File not found: ${filepath} or ${fallbackPath}`);
+          res.writeHead(404);
+          res.end('Not found');
+        }
       }
     }
 
   });
 
-  // Tạo HTTP server đơn giản cho Render health check
+  // Production: HTTP server serve static files (Render handles HTTPS termination)
   if (isProduction) {
-    const healthServer = http.createServer((req, res) => {
-      if (req.url === '/health' || req.url === '/') {
+    const httpServer = http.createServer(async (req, res) => {
+      if (req.url === '/health') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ 
           status: 'ok', 
           timestamp: new Date().toISOString(),
           service: 'WebTransport Chat Server'
         }));
+        return;
+      }
+
+      // Serve static files
+      const filename = req.url?.substring(1) || "index.html";
+      
+      if (filename === "fingerprint") {
+        const fingerprint = certificate?.fingerprint!.split(":").map((hex) => parseInt(hex, 16));
+        res.writeHead(200, { "content-type": "application/json" });
+        res.end(JSON.stringify(fingerprint));
+        return;
+      }
+
+      const filepath = path.join(__dirname, "..", "..", "client", "dist", filename);
+      if (fs.existsSync(filepath)) {
+        res.writeHead(200, {
+          "content-type": (mime.getType(filename) || "text/plain")
+        });
+        res.end((await readFile(filepath)));
       } else {
-        // Redirect to HTTPS for other requests
-        const httpsUrl = `https://${req.headers.host}${req.url}`;
-        res.writeHead(301, { 'Location': httpsUrl });
-        res.end(`Redirecting to ${httpsUrl}`);
+        console.log(`❌ File not found: ${filepath}`);
+        res.writeHead(404);
+        res.end('File not found');
       }
     });
     
-    healthServer.listen(Number(PORT), HOST, () => {
-      console.log(`🏥 Health check server listening on http://${HOST}:${PORT}`);
+    httpServer.listen(Number(PORT), HOST, () => {
+      console.log(`� HTTP server (static files) listening on http://${HOST}:${PORT}`);
+      console.log(`📝 Note: WebTransport may not work on Render - this serves static files only`);
     });
     
-    // HTTPS server on different port for production
-    const httpsPort = parseInt(PORT.toString()) + 100;
-    httpsServer.listen(httpsPort, HOST, () => {
-      console.log(`🔒 HTTPS server listening on https://${HOST}:${httpsPort}`);
-    });
   } else {
     httpsServer.listen(Number(PORT), HOST, () => {
       console.log(`🔒 HTTPS server listening on https://${HOST}:${PORT}`);

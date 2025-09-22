@@ -5,7 +5,11 @@ import ChatDemo from './ChatDemo';
 // ←
 // →
 
-const ENDPOINT = `https://${window.location.hostname}:4433`;
+// Detect environment and use appropriate endpoint
+const isLocalhost = window.location.hostname === 'localhost';
+const ENDPOINT = isLocalhost 
+  ? `https://${window.location.hostname}:4433`
+  : `https://${window.location.host}`; // Use current host for production
 
 interface Log {
   message: string;
