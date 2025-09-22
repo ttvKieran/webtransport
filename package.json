@@ -1,0 +1,27 @@
+{
+  "name": "webtransport-chat-app",
+  "version": "1.0.0",
+  "description": "WebTransport Chat Application with Node.js and React",
+  "main": "index.js",
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "build": "npm run build:client",
+    "build:client": "npm run build --workspace=client",
+    "start": "npm run start --workspace=server",
+    "dev": "npm start --workspace=client & npm start --workspace=server",
+    "install:all": "npm install && npm install --workspace=client && npm install --workspace=server"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "author": "Endel Dreyer",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.3.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.1.3"
+  }
+}

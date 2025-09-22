@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: webtransport-chat
+    runtime: node
+    region: oregon
+    plan: starter
+    buildCommand: npm run install:all && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+    healthCheckPath: /
+    autoDeploy: true
