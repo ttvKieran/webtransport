@@ -1,20 +1,21 @@
 #!/bin/bash
 set -e
 
-echo "🔧 Installing dependencies..."
+echo "🔧 Installing root dependencies..."
 npm install
 
 echo "🔧 Installing client dependencies..."
 cd packages/client
-npm install
+npm ci --include=dev
+echo "📦 Client dependencies installed, vite available: $(npx vite --version 2>/dev/null || echo 'not found')"
 
 echo "🏗️ Building client..."
-npm run build
+npx vite build --mode production
 
 cd ../..
 
 echo "🔧 Installing server dependencies..."
 cd packages/server
-npm install
+npm ci
 
 echo "✅ Build completed successfully!"
