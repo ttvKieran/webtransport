@@ -97,7 +97,7 @@ async function main() {
   /**
    * Create a HTTPS server to serve static files
    */
-  https.createServer({
+  const httpsServer = https.createServer({
     cert: certificate?.cert,
     key: certificate?.private,
   }, async function (req, res) {
@@ -137,7 +137,40 @@ async function main() {
       }
     }
 
-  }).listen(PORT);
+  });
+
+  // Tạo HTTP server đơn giản cho Render health check
+  if (isProduction) {
+    const healthServer = http.createServer((req, res) => {
+      if (req.url === '/health' || req.url === '/') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ 
+          status: 'ok', 
+          timestamp: new Date().toISOString(),
+          service: 'WebTransport Chat Server'
+        }));
+      } else {
+        // Redirect to HTTPS for other requests
+        const httpsUrl = `https://${req.headers.host}${req.url}`;
+        res.writeHead(301, { 'Location': httpsUrl });
+        res.end(`Redirecting to ${httpsUrl}`);
+      }
+    });
+    
+    healthServer.listen(Number(PORT), HOST, () => {
+      console.log(`🏥 Health check server listening on http://${HOST}:${PORT}`);
+    });
+    
+    // HTTPS server on different port for production
+    const httpsPort = parseInt(PORT.toString()) + 100;
+    httpsServer.listen(httpsPort, HOST, () => {
+      console.log(`🔒 HTTPS server listening on https://${HOST}:${httpsPort}`);
+    });
+  } else {
+    httpsServer.listen(Number(PORT), HOST, () => {
+      console.log(`🔒 HTTPS server listening on https://${HOST}:${PORT}`);
+    });
+  }
 
   console.log("Listening on " + PORT);
 
@@ -216,12 +249,14 @@ async function main() {
         datagramReader.closed.catch((e: any) => console.log("datagram reader closed with error!", e));
 
         // writing datagrams
-        const datagramWriter = value.datagrams.writable.getWriter();
-        datagramWriter.closed
-          .then(() => console.log("datagram writer closed successfully!"))
-          .catch((e: any) => console.log("datagram writer closed with error!", e));
-        datagramWriter.write(new Uint8Array([1, 2, 3, 4, 5]));
-        datagramWriter.write(new Uint8Array([6, 7, 8, 9, 10]));
+        const datagramWriter = value.datagrams.writable?.getWriter();
+        if (datagramWriter) {
+          datagramWriter.closed
+            .then(() => console.log("datagram writer closed successfully!"))
+            .catch((e: any) => console.log("datagram writer closed with error!", e));
+          datagramWriter.write(new Uint8Array([1, 2, 3, 4, 5]));
+          datagramWriter.write(new Uint8Array([6, 7, 8, 9, 10]));
+        }
 
       }).catch((e: any) => {
         console.log("session failed to be ready!");
